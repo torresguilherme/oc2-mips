@@ -1,8 +1,6 @@
 module banco_de_registradores(
 
 	input					br_in_clk,
-	input[2:0]			br_in_FSM,
-	input[7:0]			br_in_FSM2,
 	input[4:0]			br_in_rs,
 	input[4:0]			br_in_rt,
 	input[4:0]			br_in_rd,
@@ -48,7 +46,7 @@ reg [31:0] sp;
 reg [31:0] fp;
 reg [31:0] ra;
 
-always@(br_in_rs,br_in_rt,br_in_FSM)begin
+always@(br_in_rs, br_in_rt, br_in_SW)begin
 		
 	case(br_in_rs[4:0])
 		5'b00000:br_out_R_rs = zero;
@@ -160,84 +158,6 @@ always@(br_in_rs,br_in_rt,br_in_FSM)begin
 	endcase
 	
 end
-	
-always@(posedge br_in_clk)begin
-	if(br_in_FSM == 3'b000)
-	begin
-		zero = 32'b0;
-		at = 32'b0;
-		v0 = 32'b0;
-		v1 = 32'b0;
-		a0 = 32'b0;
-		a1 = 32'b0;
-		a2 = 32'b0;
-		a3 = 32'b0;
-		t0 = 32'b0;
-		t1 = 32'b0;
-		t2 = 32'b0;
-		t3 = 32'b0;
-		t4 = 32'b0;
-		t5 = 32'b0;
-		t6 = 32'b0;
-		t7 = 32'b0;
-		s0 = 32'b0;
-		s1 = 32'b0;
-		s2 = 32'b0;
-		s3 = 32'b0;
-		s4 = 32'b0;
-		s5 = 32'b0;
-		s6 = 32'b0;
-		s7 = 32'b0;
-		t8 = 32'b0;
-		t9 = 32'b0;
-		k0 = 32'b0;
-		k1 = 32'b0;
-		gp = 32'b0;
-		sp = 32'b0;
-		fp = 32'b0;
-		ra = 32'b0;
-	end else
-	if(br_in_FSM == 3'b110 && (br_in_FSM2 == 8'b00000001 || br_in_FSM2 == 8'b00000011 || br_in_FSM2 == 8'b00000110)) 
-	begin
-		case(br_in_rd[4:0])
-		5'b00000:zero = br_in_data;
-		5'b00001:at = br_in_data;
-		5'b00010:v0 = br_in_data;
-		5'b00011:v1 = br_in_data;
-		5'b00100:a0 = br_in_data;
-		5'b00101:a1 = br_in_data;
-		5'b00110:a2 = br_in_data;
-		5'b00111:a3 = br_in_data;
-		5'b01000:t0 = br_in_data;
-		5'b01001:t1 = br_in_data;
-		5'b01010:t2 = br_in_data;
-		5'b01011:t3 = br_in_data;
-		5'b01100:t4 = br_in_data;
-		5'b01101:t5 = br_in_data;
-		5'b01110:t6 = br_in_data;
-		5'b01111:t7 = br_in_data;
-		5'b10000:s0 = br_in_data;
-		5'b10001:s1 = br_in_data;
-		5'b10010:s2 = br_in_data;
-		5'b10011:s3 = br_in_data;
-		5'b10100:s4 = br_in_data;
-		5'b10101:s5 = br_in_data;
-		5'b10110:s6 = br_in_data;
-		5'b10111:s7 = br_in_data;
-		5'b11000:t8 = br_in_data;
-		5'b11001:t9 = br_in_data;
-		5'b11010:k0 = br_in_data;
-		5'b11011:k1 = br_in_data;
-		5'b11100:gp = br_in_data;
-		5'b11101:sp = br_in_data;
-		5'b11110:fp = br_in_data;
-		5'b11111:ra = br_in_data;
-		//default: br_out_R_rt = 32'b0;
-	endcase
-	end
 		
-end
-	
-	
 endmodule
 	

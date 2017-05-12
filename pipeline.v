@@ -20,6 +20,8 @@ reg[31:0] a;
 reg[31:0] b;
 reg[31:0] c;
 reg[31:0] d;
+reg[31:0] dado_lido1;
+reg[31:0] dado_lido2;
 
 banco_de_registradores br(
 	.br_in_SW(SW[4:0]),
@@ -29,8 +31,8 @@ banco_de_registradores br(
 	.br_in_rt(ir1[20:16]),
 	.br_in_rd(signal_rd),
 	.br_in_data(d),
-	.br_out_R_rs(a),
-	.br_out_R_rt(b)
+	.br_out_R_rs(dado_lido1),
+	.br_out_R_rt(dado_lido2)
 );// // instanciando o banco de registardores
 
 reg[7:0] PC;
@@ -47,7 +49,7 @@ reg halt;
 	assign out_valor3 = ir3;
 	
 	
-	// primeiro estagio
+	// primeiro estagio - fetch
 	always@(posedge clk)begin
 	
 		if(rst == 1'b1)
@@ -75,7 +77,7 @@ reg halt;
 		
 	end
 
-	// segundo estagio
+	// segundo estagio - decodificaçao
 	always@(posedge clk)begin
 	
 		if(rst == 1'b1)
@@ -90,7 +92,27 @@ reg halt;
 				// pega os valores de a e b no banco de registradores
 			end
 
-			else if(ir1[31:26] == 6'b)
+			else if(ir1[31:26] == 6'b001000) // addi
+			begin
+				//pega o valor de a
+				//+ imediato
+			end
+
+			else if(IR[31:26] == 6'b000010) //jump
+			begin
+			end
+
+			else if(IR[31:26] == 6'b000100) //beq
+			begin
+			end
+
+			else if(IR[31:26] == 6'b100011) //load
+			begin
+			end
+
+			else if(IR[31:26] == 6'b101011) //store
+			begin
+			end
 		end
 	end
 	
