@@ -1,9 +1,10 @@
 
 
-module mips_pipeline(
+module novo_mips_pipeline(
 
 	input	clk,
 	input rst
+
 );
 
 
@@ -41,9 +42,11 @@ wire [31:0] dado_lido_2; //ligado ao IR[20:16]
 // write enable: o valor é 1 quando for pra escrever nos registradores
 // por causa da existencia desse trem, nao precisa fazer nada no estagio 5
 wire signal_br_in_w_en;
+wire signal_wren;
 
 // valor do registrador de destino
 wire [5:0] signal_rd;
+
 
 
 	mem_inst mem_i(
@@ -53,19 +56,19 @@ wire [5:0] signal_rd;
 	.q(out_mem_inst)
 	);
 	
-	/*
+	
 	
 	//MEM DATA
 	
 	mem_data mem_d(
 	
-	.address(saida_ula[9:0]), //saida_ula2
-	.clock(clk[25]),
-	.data(B), 
-	.wren(signal_wren), //QUAL EH O SIGNAL_WREN??
+	.address(saida_ula_1[9:0]), 
+	.clock(clk),
+	.data(B_2), 
+	.wren(signal_wren),
 	.q(out_mem_data));
 	
-	*/
+	
 	
 
 	banco_de_registradores br(
@@ -86,24 +89,26 @@ wire [5:0] signal_rd;
 	//////////DECODER////////////
 	
 	displayDecoder DP7_0(
-	.entrada(signal_reg_para_a_placa[3:0]),
+	.entrada(saida_ula_1[3:0]),
 	.saida(HEX0)); // para a placa
 	
 	displayDecoder DP7_1(
-	.entrada(signal_reg_para_a_placa[7:4]),
+	.entrada(saida_ula_2[7:4]),
 	.saida(HEX1)); // para a placa
 	
 	assign LEDG[0] = clk[25];
 	
 	
 	
-	always@(posedge CLOCK_50)begin
+	always@(posedge clk_50)begin
 		clk = clk + 1;
 	end
 	
 	//////////DECODER////////////
 	
 	*/
+	
+assign signal_wren	=	(IR_3[31:26] == 6'b101011) ? 1 : 0; //data mem
 
 // se for uma operacao do tipo R, o segundo registrador passado é o de destino
 // se nao (tipo I), é o segundo
@@ -148,6 +153,15 @@ assign signal_br_in_w_en = ((IR_4[31:26] == 6'b000000 && (IR_4[5:0] == 6'b100000
 				
 				PC <= PC + 1;
 				IR_1 <= out_mem_inst;
+
+		if(
+		IR_1[25:21] == IR_2[25:21] || IR_1[25:21] == IR_3[25:21] ||
+      IR_1[20:16] == IR_2[20:16] || IR_1[20:16] == IR_3[20:16] ||
+		IR_1[25:21] == IR_4[25:21] ||
+      IR_1[20:16] == IR_4[20:16]
+		) begin
+				IR_1[31:0] <= 32'b0;
+			end
 				
 				
 				////////////////////////////
@@ -180,31 +194,31 @@ assign signal_br_in_w_en = ((IR_4[31:26] == 6'b000000 && (IR_4[5:0] == 6'b100000
 				
 				if(IR_2[31:26] == 6'b001000)begin //addi
 				
-					saida_ula1 <= A + IR_2[15:0];
+					saida_ula_1 <= A + IR_2[15:0];
 					
 				end
 				
 				if(IR_2[31:26] == 6'b000100)begin //beq
 				
-					saida_ula1 <= A + IR_2[15:0];
+					saida_ula_1 <= A + B_1;
 					
 				end
 				
 				if(IR_2[31:26] == 6'b000010)begin //jump
 				
-					PC = PC + 4 + IR_2[25:0];
+				PC <= PC + 4 + IR_2[25:0];
 					
 				end
 				
 				if(IR_2[31:26] == 6'b100011)begin //lw
 				
-					saida_ula1 <= A + IR_2[15:0];
+					saida_ula_1 <= A + IR_2[15:0];
 					
 				end
 				
 				if(IR_2[31:26] == 6'b101011)begin //sw
 				
-					saida_ula1 <= A + IR_2[15:0];
+					saida_ula_1 <= A + IR_2[15:0];
 					
 				end
 				
@@ -225,6 +239,11 @@ assign signal_br_in_w_en = ((IR_4[31:26] == 6'b000000 && (IR_4[5:0] == 6'b100000
 				//Memory
 				////////////////////////////
 				saida_ula_2 <= saida_ula_1;
+				if(IR_3[31:26] == 6'b100011)begin //lw
+				
+					saida_ula_2 <= out_mem_data;
+					
+				end
 				IR_4 <= IR_3;
 				////////////////////////////
 				//Memory
