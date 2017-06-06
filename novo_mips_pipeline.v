@@ -1,4 +1,12 @@
-
+// os dados podem ser pegos no encaminhamento dos registradores saida_ula_1 e saida_ula_2 (respectivamente, 4o ou 5o estagios)
+// eu sugiro fazer isso é usando um scoreboard de QUATRO 4 bits :
+// um bit para indicar se o registrador está pendente; 
+// um para indicar se o seu valor está PRONTO PARA ENCAMINHAMENTO (ou seja, se nao estiver, vai ter que dar um stall na instrucao, gerando um NOP no IR seguinte)
+// um para indicar se o dado está na saida_ula_1;
+// outro para indicar se ele está na saida_ula_2;
+// operacoes logico-aritmeticas e loads deixam 1 no primeiro e no segundo bit de cada registrador no segundo estágio da execução e zeram o primeiro no quinto estágio
+// o segundo bit é zerado pelas OLAs no TERCEIRO ESTAGIO, mas para loads ele é zerado SÓ NO QUARTO.
+// - Guilherme
 
 module novo_mips_pipeline(
 
@@ -248,25 +256,8 @@ assign signal_br_in_w_en = ((IR_4[31:26] == 6'b000000 && (IR_4[5:0] == 6'b100000
 				////////////////////////////
 				//Memory
 				////////////////////////////
-				
-				
-				
-				
-				
-				
-				////////////////////////////
-				//WB
-				////////////////////////////
-				
-				////////////////////////////
-				//WB
-				////////////////////////////
-				
+			
 			end
 		end
-		
 	end
-	
-	
-
 endmodule
