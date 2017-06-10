@@ -186,17 +186,33 @@ assign signal_br_in_w_en = ((IR_4[31:26] == 6'b000000 && (IR_4[5:0] == 6'b100000
 						
 						if(sb_validade[IR_1[20:16]] == 1)
 						begin
-						
+						PC <= PC - 4;
 						IR_1 <= IR_1;
 						IR_2 <= 32'b0;
+						
+						if(sb_posicao[IR_1[20:16]] == 1)
+						begin
+						
+						sb_validade[IR_1[20:16]] = 0;
 						
 						end
 						
+						end
+						
+						
 						if(sb_validade[IR_1[25:21]] == 1)
 						begin
+						PC <= PC - 4;
 						
 						IR_1 <= IR_1;
 						IR_2 <= 32'b0;
+						
+						if(sb_posicao[IR_1[25:21]] == 1)
+						begin
+						
+						sb_validade[IR_1[25:21]] = 0;
+						
+						end
 						
 						end
 						
