@@ -1,12 +1,4 @@
-// os dados podem ser pegos no encaminhamento dos registradores saida_ula_1 e saida_ula_2 (respectivamente, 4o ou 5o estagios)
-// eu sugiro fazer isso é usando um scoreboard de QUATRO 4 bits :
-// um bit para indicar se o registrador está pendente; 
-// um para indicar se o seu valor está PRONTO PARA ENCAMINHAMENTO (ou seja, se nao estiver, vai ter que dar um stall na instrucao, gerando um NOP no IR seguinte)
-// um para indicar se o dado está na saida_ula_1;
-// outro para indicar se ele está na saida_ula_2;
-// operacoes logico-aritmeticas e loads deixam 1 no primeiro e no segundo bit de cada registrador no segundo estágio da execução e zeram o primeiro no quinto estágio
-// o segundo bit é zerado pelas OLAs no TERCEIRO ESTAGIO, mas para loads ele é zerado SÓ NO QUARTO.
-// - Guilherme
+
 
 module novo_mips_pipeline(
 
@@ -28,6 +20,8 @@ reg [31:0] IR_1;
 reg [31:0] IR_2;
 reg [31:0] IR_3;
 reg [31:0] IR_4;
+reg [2:0] sb_posicao[31:0];
+reg sb_validade[31:0];
 
 //guarda a saida da ULA 
 reg [31:0] saida_ula_1; //para ser usada no quarto estagio
@@ -54,6 +48,8 @@ wire signal_wren;
 
 // valor do registrador de destino
 wire [5:0] signal_rd;
+
+integer i;
 
 
 
@@ -143,8 +139,15 @@ assign signal_br_in_w_en = ((IR_4[31:26] == 6'b000000 && (IR_4[5:0] == 6'b100000
 			B_2 <= 32'b0;
 			saida_ula_1 <= 32'b0;
 			saida_ula_2 <= 32'b0;
-				
+			
 			halt <= 1'b1;
+			
+			
+			for(i = 0; i < 32; i = i + 1)
+			begin
+			sb_posicao[i] = 0;
+			sb_validade[i] = 0;
+			end
 		end
 		
 		else
@@ -153,23 +156,16 @@ assign signal_br_in_w_en = ((IR_4[31:26] == 6'b000000 && (IR_4[5:0] == 6'b100000
 			if(halt == 1'b1)
 			begin
 				halt <= 1'b0;
-				PC <= PC + 1;
+				PC <= PC + 4;
 			end
 			
 			else
 			begin
 				
-				PC <= PC + 1;
+				PC <= PC + 4;
 				IR_1 <= out_mem_inst;
-
-		if(
-		IR_1[25:21] == IR_2[25:21] || IR_1[25:21] == IR_3[25:21] ||
-      IR_1[20:16] == IR_2[20:16] || IR_1[20:16] == IR_3[20:16] ||
-		IR_1[25:21] == IR_4[25:21] ||
-      IR_1[20:16] == IR_4[20:16]
-		) begin
-				IR_1[31:0] <= 32'b0;
-			end
+				
+ 
 				
 				
 				////////////////////////////
@@ -177,7 +173,51 @@ assign signal_br_in_w_en = ((IR_4[31:26] == 6'b000000 && (IR_4[5:0] == 6'b100000
 				////////////////////////////
 				A <= dado_lido_1;
 				B_1 <= dado_lido_2;
-				IR_2 <= IR_1;	
+				IR_2 <= IR_1;
+				i = IR_1[20:16];
+				//sb_validade[IR_1[20:16]] <= 1;
+				//sb_validade[IR_1[25:21]] <= 1;
+				//sb_posicao[IR_1[20:16]] <= 0;
+				//sb_posicao[IR_1[25:21]] <= 0;
+				
+				
+				if(IR_1[31:26] == 6'b000000)begin
+					if(IR_1[5:0] == 6'b100000)begin //add
+						
+						if(sb_validade[IR_1[20:16]] == 1)
+						begin
+						
+						IR_1 <= IR_1;
+						IR_2 <= 32'b0;
+						
+						end
+						
+						if(sb_validade[IR_1[25:21]] == 1)
+						begin
+						
+						IR_1 <= IR_1;
+						IR_2 <= 32'b0;
+						
+						end
+						
+						if(sb_validade[IR_1[20:16]] == 0 &&
+						   sb_validade[IR_1[25:21]] == 0)
+						begin
+						
+						sb_validade[IR_1[20:16]] <= 1;
+				      sb_validade[IR_1[25:21]] <= 1;
+						
+						end
+						
+						
+					end
+					if(IR_1[5:0] == 6'b100010)begin //sub
+					
+						
+					end
+				end
+				
+				
 				////////////////////////////
 				//leitura do banco de registradores / decode
 				////////////////////////////
@@ -191,11 +231,22 @@ assign signal_br_in_w_en = ((IR_4[31:26] == 6'b000000 && (IR_4[5:0] == 6'b100000
 				////////////////////////////
 				//Excute
 				////////////////////////////
+				
+				
+				
 				if(IR_2[31:26] == 6'b000000)begin
 					if(IR_2[5:0] == 6'b100000)begin //add
+						
+						sb_posicao[IR_2[20:16]] <= 1;
+				      sb_posicao[IR_2[25:21]] <= 1;
+						
 						saida_ula_1 <= A + B_1;
 					end
 					if(IR_2[5:0] == 6'b100010)begin //sub
+					
+						sb_posicao[IR_2[20:16]] <= 1;
+				      sb_posicao[IR_2[25:21]] <= 1;
+						
 						saida_ula_1 <= A - B_1;
 					end
 				end
@@ -208,13 +259,19 @@ assign signal_br_in_w_en = ((IR_4[31:26] == 6'b000000 && (IR_4[5:0] == 6'b100000
 				
 				if(IR_2[31:26] == 6'b000100)begin //beq
 				
-					saida_ula_1 <= A + B_1;
+					//saida_ula_1 <= A + B_1;
+					if(A == B_1)
+					begin
+					
+					PC <= PC + 4 + IR_2[15:0];
+					
+					end
 					
 				end
 				
 				if(IR_2[31:26] == 6'b000010)begin //jump
 				
-				PC <= PC + 4 + IR_2[25:0];
+				PC <= PC + 4 + IR_2[25:0]; //???
 					
 				end
 				
@@ -246,6 +303,51 @@ assign signal_br_in_w_en = ((IR_4[31:26] == 6'b000000 && (IR_4[5:0] == 6'b100000
 				////////////////////////////
 				//Memory
 				////////////////////////////
+				
+				if(IR_3[31:26] == 6'b000000)begin
+					if(IR_3[5:0] == 6'b100000)begin //add
+						
+						sb_posicao[IR_3[20:16]] <= 2;
+				      sb_posicao[IR_3[25:21]] <= 2;
+						
+					end
+					if(IR_3[5:0] == 6'b100010)begin //sub
+					
+						sb_posicao[IR_3[20:16]] <= 2;
+				      sb_posicao[IR_3[25:21]] <= 2;
+						
+					
+					end
+				end
+				
+				if(IR_3[31:26] == 6'b001000)begin //addi
+				
+					
+					
+				end
+				
+				if(IR_3[31:26] == 6'b000100)begin //beq
+				
+					
+				end
+				
+				if(IR_3[31:26] == 6'b000010)begin //jump
+				
+					
+				end
+				
+				if(IR_3[31:26] == 6'b100011)begin //lw
+				
+					
+				end
+				
+				if(IR_3[31:26] == 6'b101011)begin //sw
+				
+					
+				end
+				
+				//end
+				
 				saida_ula_2 <= saida_ula_1;
 				if(IR_3[31:26] == 6'b100011)begin //lw
 				
@@ -256,8 +358,48 @@ assign signal_br_in_w_en = ((IR_4[31:26] == 6'b000000 && (IR_4[5:0] == 6'b100000
 				////////////////////////////
 				//Memory
 				////////////////////////////
-			
+				
+				
+				
+				
+				
+				
+				////////////////////////////
+				//WB
+				////////////////////////////
+				
+				if(IR_4[31:26] == 6'b000000)begin
+					if(IR_4[5:0] == 6'b100000)begin //add
+						
+						sb_posicao[IR_4[20:16]] <= 3;
+				      sb_posicao[IR_4[25:21]] <= 3;
+						sb_validade[IR_4[20:16]] <= 0;
+				      sb_validade[IR_4[25:21]] <= 0;
+						
+					end
+					if(IR_4[5:0] == 6'b100010)begin //sub
+					
+						sb_posicao[IR_4[20:16]] <= 3;
+				      sb_posicao[IR_4[25:21]] <= 3;
+						sb_validade[IR_4[20:16]] <= 0;
+				      sb_validade[IR_4[25:21]] <= 0;
+						
+					
+					end
+				end
+				
+				////////////////////////////
+				//WB
+				////////////////////////////
+				
+				//sb_validade[IR_4[20:16]] <= 0;
+				//sb_validade[IR_4[25:21]] <= 0;
+				
 			end
 		end
+		
 	end
+	
+	
+
 endmodule
