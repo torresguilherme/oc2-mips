@@ -184,44 +184,43 @@ assign signal_br_in_w_en = ((IR_4[31:26] == 6'b000000 && (IR_4[5:0] == 6'b100000
 				if(IR_1[31:26] == 6'b000000)begin
 					if(IR_1[5:0] == 6'b100000)begin //add
 						
-						if(sb_validade[IR_1[20:16]] == 1)
+						if(sb_validade[IR_1[20:16]] == 1 
+						|| sb_validade[IR_1[25:21]] == 1 )
+						begin
+						
+						
+						if(sb_posicao[IR_1[20:16]] == 0 ||
+						   sb_posicao[IR_1[25:21]] == 0)
+						
 						begin
 						PC <= PC - 4;
 						IR_1 <= IR_1;
 						IR_2 <= 32'b0;
+						
+						end
 						
 						if(sb_posicao[IR_1[20:16]] == 1)
 						begin
 						
-						sb_validade[IR_1[20:16]] = 0;
+						B_1 <= saida_ula_1;
 						
 						end
-						
-						end
-						
-						
-						if(sb_validade[IR_1[25:21]] == 1)
-						begin
-						PC <= PC - 4;
-						
-						IR_1 <= IR_1;
-						IR_2 <= 32'b0;
 						
 						if(sb_posicao[IR_1[25:21]] == 1)
 						begin
 						
-						sb_validade[IR_1[25:21]] = 0;
+						A <= saida_ula_1;
 						
 						end
 						
 						end
+						
 						
 						if(sb_validade[IR_1[20:16]] == 0 &&
 						   sb_validade[IR_1[25:21]] == 0)
 						begin
 						
-						sb_validade[IR_1[20:16]] <= 1;
-				      sb_validade[IR_1[25:21]] <= 1;
+						sb_validade[IR_1[15:11]] <= 1;
 						
 						end
 						
@@ -253,15 +252,13 @@ assign signal_br_in_w_en = ((IR_4[31:26] == 6'b000000 && (IR_4[5:0] == 6'b100000
 				if(IR_2[31:26] == 6'b000000)begin
 					if(IR_2[5:0] == 6'b100000)begin //add
 						
-						sb_posicao[IR_2[20:16]] <= 1;
-				      sb_posicao[IR_2[25:21]] <= 1;
+						sb_posicao[IR_2[15:11]] <= 1;
 						
 						saida_ula_1 <= A + B_1;
 					end
 					if(IR_2[5:0] == 6'b100010)begin //sub
 					
-						sb_posicao[IR_2[20:16]] <= 1;
-				      sb_posicao[IR_2[25:21]] <= 1;
+						sb_posicao[IR_2[15:11]] <= 1;
 						
 						saida_ula_1 <= A - B_1;
 					end
@@ -323,14 +320,12 @@ assign signal_br_in_w_en = ((IR_4[31:26] == 6'b000000 && (IR_4[5:0] == 6'b100000
 				if(IR_3[31:26] == 6'b000000)begin
 					if(IR_3[5:0] == 6'b100000)begin //add
 						
-						sb_posicao[IR_3[20:16]] <= 2;
-				      sb_posicao[IR_3[25:21]] <= 2;
+						sb_posicao[IR_3[15:11]] <= 2;
 						
 					end
 					if(IR_3[5:0] == 6'b100010)begin //sub
 					
-						sb_posicao[IR_3[20:16]] <= 2;
-				      sb_posicao[IR_3[25:21]] <= 2;
+						sb_posicao[IR_3[15:11]] <= 2;
 						
 					
 					end
@@ -387,18 +382,14 @@ assign signal_br_in_w_en = ((IR_4[31:26] == 6'b000000 && (IR_4[5:0] == 6'b100000
 				if(IR_4[31:26] == 6'b000000)begin
 					if(IR_4[5:0] == 6'b100000)begin //add
 						
-						sb_posicao[IR_4[20:16]] <= 3;
-				      sb_posicao[IR_4[25:21]] <= 3;
-						sb_validade[IR_4[20:16]] <= 0;
-				      sb_validade[IR_4[25:21]] <= 0;
+						sb_posicao[IR_4[15:11]] <= 3;
+						sb_validade[IR_4[15:11]] <= 0;
 						
 					end
 					if(IR_4[5:0] == 6'b100010)begin //sub
 					
-						sb_posicao[IR_4[20:16]] <= 3;
-				      sb_posicao[IR_4[25:21]] <= 3;
-						sb_validade[IR_4[20:16]] <= 0;
-				      sb_validade[IR_4[25:21]] <= 0;
+						sb_posicao[IR_4[15:11]] <= 3;
+						sb_validade[IR_4[15:11]] <= 0;
 						
 					
 					end
