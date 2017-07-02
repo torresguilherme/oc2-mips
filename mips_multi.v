@@ -112,7 +112,6 @@ wire [31:0] signal_reg_para_a_placa; // para a placa
 				begin
 				PC = PC + 1;
 				end
-				//mem_inst mem_i(.address(PC),.clock(clk[25]),.q(out_mem_inst));
 				IR = out_mem_inst;
 				FSM = 3'b011;
 				FSM2 = 8'b0; 
@@ -121,7 +120,7 @@ wire [31:0] signal_reg_para_a_placa; // para a placa
 			
 			else if(FSM == 3'b011) // Decode
 			begin
-				if(IR[31:26] == 6'b000000)// && IR[5:0] == 6'b100000) // R Instruction
+				if(IR[31:26] == 6'b000000)// R Instruction
 				begin
 					if(IR[5:0] == 6'b100000)
 					begin
@@ -144,9 +143,12 @@ wire [31:0] signal_reg_para_a_placa; // para a placa
 				end else
 				if(IR[31:26] == 6'b000010) // j
 				begin
-					FSM = 3'b010;
+					
 					FSM2 = 8'b00000101;//j
 					immediate = IR[25:0];
+					PC = immediate;
+					FSM = 3'b010;
+					
 				end else
 				if(IR[31:26] == 6'b100011) // load
 				begin
@@ -160,7 +162,6 @@ wire [31:0] signal_reg_para_a_placa; // para a placa
 				
 				A = dado_lido_1;
 				B = dado_lido_2;
-				//immediate = {{16{IR[15]}}, IR[15:0]};
 				FSM = 3'b100;
 			end
 			
@@ -174,50 +175,33 @@ wire [31:0] signal_reg_para_a_placa; // para a placa
 				end else
 				if(FSM2 == 8'b00000010) // execute addi
 				begin
-					//will_write = 1;
 					saida_ula = A + immediate; 
 				end else
 				if(FSM2 == 8'b00000011) // execute sub
 				begin
-					//will_write = 1;
 					saida_ula = A - B; 
 				end else
 				if(FSM2 == 8'b00000100) // execute beq
 				begin
 					if(A==B)
 					begin
-					//	will_write = 1;
-						PC = PC + immediate;  //+ 1?
+						PC = PC + immediate + 4;  //+ 1?
 						FSM = 3'b010;
 					end
 				end else
 			
 				if(FSM2 == 8'b00000110)// execute load
 				begin
-					//will_write = 1;
 					saida_ula = A + immediate;
 				end else
 				if(FSM2 == 8'b00000111) // execute store
 				begin
-					//will_write = 0;
 				   saida_ula = A + immediate;
 				end
 				
 				FSM = 3'b101;
 			end
 			
-			
-			/*	always@(FSM2)   //permite ou nao escrita na memoria
-			
-			begin
-			if(FSM == 3'b101 && FSM2 == 8'b00000111)begin
-			signal_wren = 1;
-			end
-			else
-			begin
-			signal_wren = 0;
-			end
-	     */
 			
 			
 			else if(FSM == 3'b101) // Memory
