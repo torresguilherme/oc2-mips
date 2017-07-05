@@ -18,7 +18,8 @@ module mips_multicore(
 );
 
 
-wire stall;
+wire stall1;
+wire stall2;
 reg [1:0] cache_table1[255:0];
 reg cache_valido1[255:0];
 
@@ -27,12 +28,19 @@ reg cache_valido2[255:0];
 
 reg data_c1[31:0];
 reg data_c2[31:0];
+reg data_p1[31:0];
+reg data_p2[31:0];
+wire r_en1c;
+wire w_en1c;
+wire r_en2c;
+wire w_en2c;
 wire r_en1;
 wire w_en1;
 wire r_en2;
 wire w_en2;
 reg[11:0] adress1;
 reg[11:0] adress2;
+reg[11:0] end_prim;
 reg[31:0]data1;
 reg[31:0]data2;
 reg[9:0] end1;
@@ -43,7 +51,11 @@ reg[31:0] dado_mem;
 reg[31:0] data_men;
 
 integer i;
-integer achou;
+integer achou1;
+integer achou2;
+integer prioridade;
+
+reg FSM[2:0];
 
 
 achou = 0;
@@ -54,6 +66,9 @@ achou = 0;
 	 
 	 if(rst == 1)
 	 begin
+	 
+	 stall1 = 0;
+	 stall2 = 0;
 	 
 	 for(i = 0; i < 256; i = i + 1)
 	 begin
@@ -72,38 +87,46 @@ achou = 0;
 	 
 
 mips_multi P1(.stall(stall),.clk(CLOCK_50),.rst(KEY[0],
-				 .saida_cache(data_c1)), 
+				 .saida_cache(data_p1)), 
              .address1(adress1),
 				 .data1(data1),
 				 .r_en1(r_en1),
 				 .w_en1(w_en1);
 
 mips_multi P1(.stall(stall),.clk(CLOCK_50),.rst(KEY[0],
-				  .saida_cache(data_c2)), 
+				  .saida_cache(data_p2)), 
              .address2(adress2),
 				 .data2(data2),
 				 .r_en2(r_en2),
 				 .w_en2(w_en2);
 
-if(r_en1 == 1 || r_en2 == 1 || w_en1 == 1 || w_en2 == 1)	
+if(r_en1 == 1 || w_en1 == 1) 	
 begin
 
-stall = 1;
+stall1 = 1;
+
+end
+
+if(r_en2 == 1 || w_en2 == 1)
+begin
+
+stall2 = 1;
 
 end
 
 
-	 for(i = 0; i < 256; i = i + 1)
-	 begin
 
-	 if (adress1[11:10] == cache_table1[i])
+
+	 if (adress1[11:10] == cache_table1[adress[9:2]] && cache_valido1 == 1)
 	 begin
 	 
 	 achou = 1;
+	 end1 = adress1[1:0] + adress[9:2];
+	 
 	 if(w_en1 == 1)
 	 begin
 	 
-	 end1 = adress1[0:9];
+	 end1 = adress1[1:0] + adress[9:2];
 	 data_mem = data;
 	 
 	 end
@@ -117,29 +140,185 @@ end
 	 
 	 end
 	 
-	 if (adress2 == cache_table2[i])
+	  if (adress2[11:10] == cache_table2[adress[9:2]] && cache_valido2 == 1)
 	 begin
 	 
 	 
 	 end
 	 
 	 
-	 end 
 	
-if (achou == 0)
+if (achou1 == 0 && achou2 == 0)
 begin
+
+
+prioridade = 1;
+
+if(r_en1 == 1)
+begin
+
+end_prim = address1;    //le da memoria principal
+ren_mem = r_en1;
+wen_mem = 0;
+FSM = 3'b001;
+prioridade = 0;
+
+if(FSM == 3'b001)
+begin
+
+data_1 = dado_mem;   //escreve na cache1
+end1 = adress1[9:2] + adress1[1:0];
+w_en1c = 1;
+r_en1c = 0;
+FSM = 3'b010;
+
+if(FSM = 3'b010)
+begin
+
+cache_table1[adress1[9:2]] = adress1[11:10]; //atualiza cache table
+FSM = 3'b011
+
+end
+
+if(FSM = 3'b011)
+begin
+
+
+end1 = adress1[9:2] + adress1[1:0]; //manda ler da cache1
+w_en1c = 0;
+r_en1c = 1;
+stall1 = 0;
+FSM = 3'b100
+
+end
+
+if(FSM == 3'b100)
+begin
+
+data_p1 = data_c1; //manda dado pro banco de registradores em P1
+FSM = 3'b000;
+stall1 = 0; //termina
+
+
+end
+
+
 
 
 
 end
 
 
+
+end
+
+if(w_en1 == 1)
+begin
+
+end_prim = address1; //escreve na memoria principal
+ren_mem = 0;
+wen_mem = 1;
+data_mem = data1;
+FSM = 3'b001;
+prioridade = 0;
+
+if(FSM == 3'b001)
+begin
+
+end1 = adress1[9:2] + adress1[1:0]; //escreve na cache1
+data_1 = data_mem;
+w_en1c = 1;
+r_en1c = 0;
+FSM = 3'b010;
+end
+if(FSM = 3'b010)
+begin
+
+cache_table1[adress1[9:2]] = adress1[11:10]; //atualiza cache table
+FSM = 3'b000;
+stall1 = 0; //termina
+
+end
+
+
+end
+
+if(prioridade == 0)
+begin
+
+if(r_en2 == 1)
+begin
+
+end_prim = address1; //escreve na memoria principal
+ren_mem = 0;
+wen_mem = 1;
+data_mem = data2;
+FSM = 3'b001;
+
+if(FSM == 3'b001)
+begin
+
+end2 = adress2[9:2] + adress2[1:0]; //escreve na cache1
+data_2 = data_mem;
+w_en2c = 1;
+r_en2c = 0;
+FSM = 3'b010;
+end
+if(FSM = 3'b010)
+begin
+
+cache_table2[adress2[9:2]] = adress2[11:10]; //atualiza cache table
+FSM = 3'b000;
+stall1 = 0; //termina
+end
+
+end
+
+
+if(w_en2 == 1)
+begin
+
+end_prim = address2; //escreve na memoria principal
+ren_mem = 0;
+wen_mem = 1;
+data_mem = data2;
+FSM = 3'b001;
+
+if(FSM == 3'b001)
+begin
+
+end2 = adress2[9:2] + adress2[1:0]; //escreve na cache1
+data_2 = data_mem;
+w_en2c = 1;
+r_en2c = 0;
+FSM = 3'b010;
+end
+if(FSM = 3'b010)
+begin
+
+cache_table2[adress2[9:2]] = adress2[11:10]; //atualiza cache table
+FSM = 3'b000;
+stall2 = 0; //termina
+end
+
+
+
+end 
+
+
+
+end 
+
+
+end //end achou = 0
+
+
 cache1 c1(		
 		.address(end1),
 		.clock(clk),
 		;data(data_1),
-		.rden	(r_en1)
-		.wren(w_en1)
+		.rden	(r_en1c)
+		.wren(w_en1c)
 		.q(data_c1)
 	);
 	
@@ -148,13 +327,14 @@ cache1 c2(
 		.address(end2),
 		.clock(clk),
 		;data(data_2),
-		.rden	(r_en2)
-		.wren(w_en2)
+		.rden	(r_en2c)
+		.wren(w_en2c)
 		.q(data_c2)
 	);
 	
 memoria_principal mp bn(		
-		.address(end),
+		.address(end_prim)
+		),
 		.clock(clk),
 		;data(data_men),
 		.rden	(ren_mem)
