@@ -40,7 +40,7 @@ wire [31:0] dado_lido_1; // dado lido do banco de registardores
 wire [31:0] dado_lido_2; // dado lido do banco de registardores
 
 wire [31:0] signal_reg_para_a_placa; // para a placa
-integer para;
+
 
 
 
@@ -218,6 +218,7 @@ integer para;
 				
 			   if(stall != 1)
 				begin
+				
 				FSM = 3'b110;
 				end
 				

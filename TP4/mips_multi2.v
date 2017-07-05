@@ -218,6 +218,7 @@ integer para;
 				
 			   if(stall != 1)
 				begin
+				
 				FSM = 3'b110;
 				end
 				
@@ -267,4 +268,4 @@ integer para;
 			end
 			
 
-	endmodule
+endmodule
