@@ -48,7 +48,7 @@ reg [31:0] sp;
 reg [31:0] fp;
 reg [31:0] ra;
 
-always@(br_in_rs,br_in_rt)begin
+always@(br_in_rs,br_in_rt,br_in_FSM)begin
 		
 	case(br_in_rs[4:0])
 		5'b00000:br_out_R_rs = zero;
@@ -197,7 +197,8 @@ always@(posedge br_in_clk)begin
 		fp = 32'b0;
 		ra = 32'b0;
 	end else
-	if(br_in_FSM == 3'b110 && (br_in_FSM2 == 2'h01 || br_in_FSM2 == 2'h06))
+	if(br_in_FSM == 3'b110 && (br_in_FSM2 == 8'b00000001 || br_in_FSM2 == 8'b00000010 || br_in_FSM2 == 8'b00000011 
+										|| br_in_FSM2 == 8'b00000110)) 
 	begin
 		case(br_in_rd[4:0])
 		5'b00000:zero = br_in_data;

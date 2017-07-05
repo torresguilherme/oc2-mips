@@ -40,6 +40,7 @@ wire [31:0] dado_lido_1; // dado lido do banco de registardores
 wire [31:0] dado_lido_2; // dado lido do banco de registardores
 
 wire [31:0] signal_reg_para_a_placa; // para a placa
+integer para;
 
 
 
@@ -94,6 +95,7 @@ wire [31:0] signal_reg_para_a_placa; // para a placa
 			begin
 				PC = 10'b0;
 				IR = 32'b0;
+				para = 0;
 				saida_ula = 32'b0;
 				A = 32'b0;
 				B = 32'b0;
@@ -195,9 +197,13 @@ wire [31:0] signal_reg_para_a_placa; // para a placa
 				if(FSM2 == 8'b00000110)// execute load
 				begin
 					saida_ula = A + immediate;
+					r_en = 1;
+					stall = 1;
 				end else
 				if(FSM2 == 8'b00000111) // execute store
 				begin
+				w_en = 1;
+				stall = 1;
 				   saida_ula = A + immediate;
 				end
 				
@@ -208,6 +214,8 @@ wire [31:0] signal_reg_para_a_placa; // para a placa
 			
 			else if(FSM == 3'b101) // Memory
 			begin
+				
+				
 			   if(stall != 1)
 				begin
 				FSM = 3'b110;
@@ -223,11 +231,19 @@ wire [31:0] signal_reg_para_a_placa; // para a placa
 				{
 				
 				  adress = saida_ula[11:0];
-				  dado_a_ser_escrito = saida_cache;
+				  signal_dado_a_ser_escrito = saida_cache;
 				 
+					if(FSM2 == 8'b00000110)
+					begin
+					r_en = 1;
+					w_en = 0;
+					end
+					
 					if(FSM2 == 8'b00000111)
 					begin
 				   data = IR[20:16];
+					w_en = 1;
+					r_en = 0;
 					end
 				
 				}
