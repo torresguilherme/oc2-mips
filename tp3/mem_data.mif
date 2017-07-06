@@ -1,4 +1,4 @@
--- Copyright (C) 2016  Intel Corporation. All rights reserved.
+-- Copyright (C) 2017  Intel Corporation. All rights reserved.
 -- Your use of Intel Corporation's design tools, logic functions 
 -- and other software and tools, and its AMPP partner logic 
 -- functions, and any output files from any of the foregoing 
@@ -22,18 +22,5 @@ ADDRESS_RADIX=UNS;
 DATA_RADIX=DEC;
 
 CONTENT BEGIN
-	0     :   537395200;
-	1     :   537460737;
-	2     :   537526272;
-	3     :   537591811;
-	4     :   292159491;
-	5     :   17383456;
-	6     :   23681058;
-	7     :   135266308;
-	8     :   -1347944448;
-	9     :   537395200;
-	10    :   -1884815360;
-	11    :   17317920;
-	[12..15]  :   17383456;
-	[16..1023]  :   0;
+	[0..1023]  :   0;
 END;

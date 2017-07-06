@@ -1,16 +1,16 @@
 module banco_de_registradores(
 
 	input					br_in_clk,
-	input[2:0]			br_in_FSM,
-	input[7:0]			br_in_FSM2,
 	input[4:0]			br_in_rs,
 	input[4:0]			br_in_rt,
 	input[4:0]			br_in_rd,
 	input[31:0]			br_in_data,
+	
+	input					br_in_w_en,
+	input					br_in_rst,
+	
 	output reg[31:0]	br_out_R_rs,
-	output reg[31:0]	br_out_R_rt,
-	input[4:0] 			br_in_SW, // para a placa
-	output reg[31:0]	br_out_reg_para_a_placa // para a placa
+	output reg[31:0]	br_out_R_rt
 );
 
 
@@ -48,8 +48,10 @@ reg [31:0] sp;
 reg [31:0] fp;
 reg [31:0] ra;
 
-always@(br_in_rs,br_in_rt,br_in_FSM)begin
+//always@(br_in_rs,br_in_rt,br_in_clk)begin
 		
+always@(posedge br_in_clk)begin
+
 	case(br_in_rs[4:0])
 		5'b00000:br_out_R_rs = zero;
 		5'b00001:br_out_R_rs = at;
@@ -122,47 +124,10 @@ always@(br_in_rs,br_in_rt,br_in_FSM)begin
 		default: br_out_R_rt = 32'b0;
 	endcase
 	
-	// para a placa
-	case(br_in_SW[4:0])
-		5'b00000:br_out_reg_para_a_placa = zero;
-		5'b00001:br_out_reg_para_a_placa = at;
-		5'b00010:br_out_reg_para_a_placa = v0;
-		5'b00011:br_out_reg_para_a_placa = v1;
-		5'b00100:br_out_reg_para_a_placa = a0;
-		5'b00101:br_out_reg_para_a_placa = a1;
-		5'b00110:br_out_reg_para_a_placa = a2;
-		5'b00111:br_out_reg_para_a_placa = a3;
-		5'b01000:br_out_reg_para_a_placa = t0;
-		5'b01001:br_out_reg_para_a_placa = t1;
-		5'b01010:br_out_reg_para_a_placa = t2;
-		5'b01011:br_out_reg_para_a_placa = t3;
-		5'b01100:br_out_reg_para_a_placa = t4;
-		5'b01101:br_out_reg_para_a_placa = t5;
-		5'b01110:br_out_reg_para_a_placa = t6;
-		5'b01111:br_out_reg_para_a_placa = t7;
-		5'b10000:br_out_reg_para_a_placa = s0;
-		5'b10001:br_out_reg_para_a_placa = s1;
-		5'b10010:br_out_reg_para_a_placa = s2;
-		5'b10011:br_out_reg_para_a_placa = s3;
-		5'b10100:br_out_reg_para_a_placa = s4;
-		5'b10101:br_out_reg_para_a_placa = s5;
-		5'b10110:br_out_reg_para_a_placa = s6;
-		5'b10111:br_out_reg_para_a_placa = s7;
-		5'b11000:br_out_reg_para_a_placa = t8;
-		5'b11001:br_out_reg_para_a_placa = t9;
-		5'b11010:br_out_reg_para_a_placa = k0;
-		5'b11011:br_out_reg_para_a_placa = k1;
-		5'b11100:br_out_reg_para_a_placa = gp;
-		5'b11101:br_out_reg_para_a_placa = sp;
-		5'b11110:br_out_reg_para_a_placa = fp;
-		5'b11111:br_out_reg_para_a_placa = ra;
-		default: br_out_reg_para_a_placa = 32'b0;
-	endcase
-	
 end
 	
 always@(posedge br_in_clk)begin
-	if(br_in_FSM == 3'b000)
+	if(br_in_rst == 1'b0)
 	begin
 		zero = 32'b0;
 		at = 32'b0;
@@ -197,7 +162,7 @@ always@(posedge br_in_clk)begin
 		fp = 32'b0;
 		ra = 32'b0;
 	end else
-	if(br_in_FSM == 3'b110 && (br_in_FSM2 == 8'b00000001 || br_in_FSM2 == 8'b00000010 || br_in_FSM2 == 8'b00000011 || br_in_FSM2 == 8'b00000110)) 
+	if(br_in_w_en == 1'b1)
 	begin
 		case(br_in_rd[4:0])
 		5'b00000:zero = br_in_data;

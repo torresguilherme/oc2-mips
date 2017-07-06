@@ -197,7 +197,8 @@ always@(posedge br_in_clk)begin
 		fp = 32'b0;
 		ra = 32'b0;
 	end else
-	if(br_in_FSM == 3'b110 && (br_in_FSM2 == 8'b00000001 || br_in_FSM2 == 8'b00000010 || br_in_FSM2 == 8'b00000011 || br_in_FSM2 == 8'b00000110)) 
+	if(br_in_FSM == 3'b110 && (br_in_FSM2 == 8'b00000001 || br_in_FSM2 == 8'b00000010 || br_in_FSM2 == 8'b00000011 
+										|| br_in_FSM2 == 8'b00000110)) 
 	begin
 		case(br_in_rd[4:0])
 		5'b00000:zero = br_in_data;
