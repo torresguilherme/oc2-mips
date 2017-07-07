@@ -2,8 +2,6 @@
 
 module novo_mips_pipeline(
 
-	
-	
 	input				CLOCK_50,// Para a placa
 	input[3:0]		KEY, // Para a placa
 	input[17:0]		SW, // Para a placa
@@ -23,6 +21,8 @@ module novo_mips_pipeline(
 
 
 reg halt;
+
+
 reg [31:0] clk;
 
 //PC -> enderecos no arquivo vao de zero a 1023, entao tem 10 bits
@@ -63,7 +63,8 @@ wire signal_wren;
 wire [5:0] signal_rd;
 
 integer i;
-
+reg jump;
+reg branch;
 
 
 	mem_inst mem_i(
@@ -91,7 +92,7 @@ integer i;
 	banco_de_registradores br(
 
 	.br_in_clk(clk[25]),
-	.br_in_rst(rst),
+	.br_in_rst(KEY[0]),
 	.br_in_rs(IR_1[25:21]),
 	.br_in_rt(IR_1[20:16]),
 	.br_in_rd(signal_rd),
@@ -118,7 +119,7 @@ integer i;
 	
 	
 	
-	always@(posedge CLOCK_50)begin
+	always@(posedge clk[25])begin
 		clk = clk + 1;
 	end 
 	
@@ -142,7 +143,7 @@ assign signal_br_in_w_en = ((IR_4[31:26] == 6'b000000 && (IR_4[5:0] == 6'b100000
 	always@(posedge clk[25])begin
 	
 	
-		if(KEY[0] == 0)
+		if(KEY[0] == 1'b0)
 		begin
 			
 			PC <= 10'b0;
@@ -155,9 +156,9 @@ assign signal_br_in_w_en = ((IR_4[31:26] == 6'b000000 && (IR_4[5:0] == 6'b100000
 			B_2 <= 32'b0;
 			saida_ula_1 <= 32'b0;
 			saida_ula_2 <= 32'b0;
-			
+			jump <= 1'b0;
+			branch <= 1'b0;
 			halt <= 1'b1;
-			
 			
 			for(i = 0; i < 32; i = i + 1)
 			begin
@@ -178,19 +179,30 @@ assign signal_br_in_w_en = ((IR_4[31:26] == 6'b000000 && (IR_4[5:0] == 6'b100000
 			else
 			begin
 				
-				PC <= PC + 1;
-				IR_1 <= out_mem_inst;
-				
- 
-				
-				
+				if (branch != 1)
+				begin
+					PC <= PC + 1;
+				end
+				if (branch == 1)
+				begin
+					IR_1 <= 1'b0;
+				end
+				if(jump != 1 && branch != 1)
+				begin
+					IR_1 <= out_mem_inst;
+				end
+				jump <= 1'b0;
+				branch <= 1'b0;
+				IR_2 <= IR_1;
 				////////////////////////////
 				//leitura do banco de registradores / decode
 				////////////////////////////
 				A <= dado_lido_1;
 				B_1 <= dado_lido_2;
-				IR_2 <= IR_1;
-				
+
+				////////////////////////////
+				//Excute
+				////////////////////////////
 				
 				if(IR_1[31:26] == 6'b000000)begin
 						
@@ -430,10 +442,10 @@ assign signal_br_in_w_en = ((IR_4[31:26] == 6'b000000 && (IR_4[5:0] == 6'b100000
 				
 					
 				
-				if(IR_1[31:26] == 6'b000010) //jump
+				if(IR_2[31:26] == 6'b000010) //jump
 				begin
 				
-				PC <= PC + 4 + IR_1[25:0]; //pc + 4
+				PC[9:0] <= IR_2[9:0];
 				IR_1 <= 0;
 				IR_2 <= 0;
 				
@@ -542,30 +554,30 @@ assign signal_br_in_w_en = ((IR_4[31:26] == 6'b000000 && (IR_4[5:0] == 6'b100000
 						
 						sb_posicao[IR_2[15:11]] <= 1;
 						
-						saida_ula_1 <= A + B_1;
+						saida_ula_1 <= dado_lido_1 + dado_lido_2;
 					end
 					if(IR_2[5:0] == 6'b100010)begin //sub
 					
 						sb_posicao[IR_2[15:11]] <= 1;
 						
-						saida_ula_1 <= A - B_1;
+						saida_ula_1 <= dado_lido_1 - dado_lido_2;
 					end
 				end
 				
 				if(IR_2[31:26] == 6'b001000)begin //addi
 				
 					sb_posicao[IR_2[20:16]] <= 1;
-					saida_ula_1 <= A + IR_2[15:0];
+					saida_ula_1 <= dado_lido_1 + {{16{IR_2[15]}}, IR_2[15:0]};
 					
 				end
 				
 				if(IR_2[31:26] == 6'b000100)begin //beq
 				
 					//saida_ula_1 <= A + B_1;
-					if(A == B_1)
+					if(dado_lido_1 == dado_lido_2)
 					begin
 					
-					PC <= PC + 4 + IR_2[15:0];
+					PC <= PC - 2 + {{16{IR_2[15]}}, IR_2[15:0]};
 					IR_1 <= 32'b0;
 					IR_2 <= 32'b0;
 					IR_3 <= 32'b0;
@@ -576,22 +588,27 @@ assign signal_br_in_w_en = ((IR_4[31:26] == 6'b000000 && (IR_4[5:0] == 6'b100000
 				/*
 				if(IR_2[31:26] == 6'b000010)begin //jump
 				
-				PC <= PC + 4 + IR_2[25:0]; //ja encaminhado
-					
+					PC[9:0] <= IR_2[9:0];
+					IR_1 <= 32'b0;
+					IR_2 <= 32'b0;
+					IR_3 <= 32'b0;
+					IR_4 <= 32'b0;
+					jump <= 1'b1;		
+
 				end
 				*/
 				
 				if(IR_2[31:26] == 6'b100011)begin //lw
 				
 					sb_posicao[IR_2[20:16]] <= 1;
-					saida_ula_1 <= A + IR_2[15:0];
+					saida_ula_1 <= dado_lido_1 + {{16{IR_2[15]}}, IR_2[15:0]};
 					
 				end
 				
 				if(IR_2[31:26] == 6'b101011)begin //sw
 					
 					
-					saida_ula_1 <= A + IR_2[15:0];
+					saida_ula_1 <= dado_lido_1 + {{16{IR_2[15]}}, IR_2[15:0]};
 					
 				end
 				
