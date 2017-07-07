@@ -35,7 +35,7 @@ reg [31:0] B; // Registrador B do MIPS
 
 wire [31:0] out_mem_inst; //saída da memória de instruções
 wire [31:0] out_mem_data; //saída da memória de dados
-wire signal_wren;
+wire signal_wren; //ERRADO, mudar pra REG
 
 wire [4:0] signal_rd; // utilizado para "criar" o multiplexador que seleciona o registrador de destino do MIPS
 wire [31:0] signal_dado_a_ser_escrito; // utilizado para "criar" o multiplexador que seleciona qual dado será salvo no banco de registradores do MIPS
@@ -66,10 +66,9 @@ wire [31:0] signal_reg_para_a_placa; // para a placa
  
 
 	// código que cria o multiplexador que seleciona o registrador de destino do MIPS
-	assign signal_rd	=	(FSM == 3'b110 && (FSM2 == 8'b00000110 || FSM2 == 8'b00000010)) ? IR[20:16] : IR[15:11];
+	assign signal_rd	=	(FSM == 3'b110 && (FSM2 == 8'b00000110 || FSM2 == 8'b00000010)) ? IR[20:16] : IR[15:11]; 
 	
-	assign signal_wren	=	(FSM == 3'b101 && FSM2 == 8'b00000111) ? 1 : 0;
-	
+	assign signal_wren	=	(FSM == 3'b101 && FSM2 == 8'b00000111) ? 1 : 0; //trocar por wire
 
 	
 	// incrementado o contador clk em função do CLOCK_50 (clock de 50 Mhz interno da placa)
@@ -97,6 +96,7 @@ wire [31:0] signal_reg_para_a_placa; // para a placa
 				A = 32'b0;
 				B = 32'b0;
 				FSM = 3'b001;
+				//ASSIGN WREN 0
 			end
 			
 			else if(FSM == 3'b001)// Halt
@@ -182,7 +182,7 @@ wire [31:0] signal_reg_para_a_placa; // para a placa
 				begin
 					if(A==B)
 					begin
-						PC = PC + immediate;  //+ 1?
+						PC = PC + immediate;  //9:0?
 						//FSM = 3'b010;
 					end
 				end else
@@ -200,6 +200,7 @@ wire [31:0] signal_reg_para_a_placa; // para a placa
 				if(FSM2 == 8'b00000111) // execute store
 				begin
 				   saida_ula = A + immediate;
+					//TROCA WIRE
 				end
 				
 				FSM = 3'b101;
@@ -229,9 +230,9 @@ wire [31:0] signal_reg_para_a_placa; // para a placa
 				
 			end
 			
-			end
+		end
 			
-			end
+	end
 			
 
 	endmodule
