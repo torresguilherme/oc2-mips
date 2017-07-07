@@ -19,8 +19,8 @@ module mips_multicore(
 
 	integer a;
 	integer b;
-	wire stall1; //stall processadores
-	wire stall2;
+	reg stall1; //stall processadores
+	reg stall2;
 	
 	reg [1:0] cache_table1[255:0]; //cache table do cache1
 	reg cache_valido1[255:0];
@@ -78,11 +78,6 @@ module mips_multicore(
 	reg [2:0]FSMG ;//controla estados incialmente (inicializa achou1 e achou2 caso stall = 1)
 	
 	reg [31:0] clk; // contador utilizado para deixar a frequência do clock na placa mais lento
-	
-	assign stall1 = (achou1 != 2) ? 1 : 0;
-	
-	assign stall2 = (achou2 != 2) ? 1 : 0;
-	
 
 mips_multi1 P1(.stall(stall1),.clk(clk),.KEY(KEY[0]),
 				 .saida_cache(data_p1),
@@ -138,8 +133,7 @@ memoria_principal mp(
 
 
 
-    always@(posedge clk[25]) 
-	 begin
+    always@(posedge clk[25]) begin
 	 
 	 if(KEY[0] == 0)
 	 begin
@@ -147,11 +141,11 @@ memoria_principal mp(
 	 a = 0;
 	 b = 0;
 	 
-	 //stall1 = 0;
-	// stall2 = 0;
+	 stall1 = 0;
+	 stall2 = 0;
 	 
-	 achou1 = 2;
-	 achou2 = 2;
+	 achou1 = 0;
+	 achou2 = 0;
 	 prioridade = 0;
 	 i = 0;
 
@@ -197,29 +191,11 @@ memoria_principal mp(
 
 	end //end rst
 	
-	if(FSMG == 3'b000)
-	begin
-	
-	FSMG = 3'b001;
-	
-	end
-	
-	
-	if(FSMG == 3'b001)
-	
-	if(w_en1 == 1 || r_en1 == 1 || w_en2 == 1 || r_en2 == 1)
-	begin
-	
-	
-	begin
-	
 	if(w_en1 == 1 || r_en1 == 1)
 	begin
 	
 	
-	//stall1 = 1;
-	i = 1;
-	FSMG = 3'b010;
+	stall1 = 1;
 	
 	end
 	
@@ -228,70 +204,36 @@ memoria_principal mp(
 	begin
 	
 	
-	//stall2 = 1;
-	i = 1;
-	FSMG = 3'b010;
-	
-	end
-	
-	 
-	end
-	
-	end
-	
-	if(FSMG == 3'b010 && i == 1)
-	begin
-	
-	FSMG = 3'b011;
-	i = 1;
+	stall2 = 1;
 	
 	end
 	 
+	 
 
-	///////POR ALGUMA RAZAO ELE PULA DIRETO DO FSMG 001 PARA O FSMG 100/////
 
-	if(FSMG == 3'b011)
+
+	if(stall1 == 1 || stall2 == 1)
 	begin
 	
-	if (adress1[11:10] == cache_table1[adress1[9:2]] && cache_valido1[adress1[9:2]] == 1 && i == 1)
+	if (adress1[11:10] == cache_table1[adress1[9:2]] && cache_valido1[adress1[9:2]] == 1)
 	begin
 	
 	achou1 = 1;
-	FSMG = 3'b100;
+	FSMG = 3'b001;
 	
 	end
 	
-	if ((adress1[11:10] != cache_table1[adress1[9:2]] || cache_valido1[adress1[9:2]] != 1) && i == 1)
-	begin
-	
-	achou1 = 0;
-	FSMG = 3'b100;
-	
-	end
-	
-	if (adress2[11:10] == cache_table2[adress2[9:2]] && cache_valido2[adress1[9:2]] == 1 && i == 2)
+	if (adress2[11:10] == cache_table2[adress2[9:2]] && cache_valido2[adress1[9:2]] == 1)
 	begin
 	
 	achou2 = 1;
-	FSMG = 3'b100;
+	FSMG = 3'b001;
 	
 	end
 	
-	
-	if ((adress2[11:10] != cache_table2[adress2[9:2]] || cache_valido2[adress1[9:2]] != 1) && i == 2)
-	begin
-	
-	achou2 = 0;
-	FSMG = 3'b100;
-	
 	end
-	
-	//FSMG = 3'b011;
-	
-	end
-	
 
-	if(FSMG == 3'b100)
+	if(FSMG == 3'b001)
 	begin
 
 	if (achou1 == 1 && achou2 == 1)
@@ -322,8 +264,8 @@ memoria_principal mp(
 
 	cache_table1[adress1[9:2]] = adress1[11:10]; //atualiza cache table
 	FSM1 = 3'b000;
-	//stall1 = 0; //termina
-	achou1 = 2;
+	stall1 = 0; //termina
+	achou1 = 0;
 	//w_en1 = 0;
 	end
 	
@@ -343,8 +285,8 @@ memoria_principal mp(
 
 	data_p1 = data_c1; //manda dado pro banco de registradores em P1
 	FSM1 = 3'b000;
-	//stall1 = 0; //termina
-	achou1 = 2;
+	stall1 = 0; //termina
+	achou1 = 0;
 	//r_en1 = 0;
    end
 	
@@ -377,8 +319,8 @@ memoria_principal mp(
 
 	cache_table2[adress2[9:2]] = adress2[11:10]; //atualiza cache table
 	FSM2 = 3'b000;
-	//stall2 = 0; //termina
-	achou2 = 2;
+	stall2 = 0; //termina
+	achou2 = 0;
 	//w_en2 = 0;
 	end
 	 
@@ -400,8 +342,8 @@ memoria_principal mp(
 
 	data_p2 = data_c2; //manda dado pro banco de registradores em P1
 	FSM2 = 3'b000;
-	//stall2 = 0; //termina
-	achou2 = 2;
+	stall2 = 0; //termina
+	achou2 = 0;
 	//r_en2 = 0;
    end
 	
@@ -411,7 +353,7 @@ memoria_principal mp(
 	 
 	 
 	 
-	if ( achou1 != 1 && achou2 == 1 || achou1 != 1 && achou2 == 2)
+	if (achou1 == 0 && achou2 == 1)
 	begin
 	 
 	if(r_en1 == 1)
@@ -457,8 +399,8 @@ memoria_principal mp(
 
 	data_p1 = data_c1; //manda dado pro banco de registradores em P1
 	FSM1 = 3'b000;
-	//stall1 = 0; //termina
-	achou1 = 2;
+	stall1 = 0; //termina
+	achou1 = 0;
 	//r_en1 = 0;
 
 	end
@@ -491,8 +433,8 @@ memoria_principal mp(
 	cache_table1[adress1[9:2]] = adress1[11:10]; //atualiza cache table
 	cache_valido1[adress1[9:2]] = 1;
 	FSM1 = 3'b000;
-	//stall1 = 0; //termina
-	achou1 = 2;
+	stall1 = 0; //termina
+	achou1 = 0;
 	//w_en1 = 0;
 	end
 		
@@ -523,8 +465,8 @@ memoria_principal mp(
 
 	cache_table2[adress2[9:2]] = adress2[11:10]; //atualiza cache table
 	FSM2 = 3'b000;
-	//stall2 = 0; //termina
-	achou2 = 2;
+	stall2 = 0; //termina
+	achou2 = 0;
 	//w_en2 = 0;
 	end
 	
@@ -536,7 +478,7 @@ memoria_principal mp(
 	end2 = adress2[9:2] + adress2[1:0];
 	w_en2c = 0;
 	r_en2c = 1;
-	FSM2 = 3'b010;
+	FSM2 = 3'b001;
 
 
 	if(FSM2 == 3'b010)
@@ -544,8 +486,8 @@ memoria_principal mp(
 
 	data_p2 = data_c2; //manda dado pro banco de registradores em P1
 	FSM2 = 3'b000;
-	//stall2 = 0; //termina
-	achou2 = 2;
+	stall2 = 0; //termina
+	achou2 = 0;
 	//r_en2 = 0;
 
 	end
@@ -556,7 +498,7 @@ memoria_principal mp(
    end //end second condition
 	 
 	 
-	if ( (achou1 == 1 && achou2 != 1 ) || achou1 == 2 && achou2 != 1)
+	if (achou1 == 1 && achou2 == 0)
 	begin
 	 
 	if(w_en1 == 1)
@@ -585,8 +527,8 @@ memoria_principal mp(
 
 	cache_table1[adress1[9:2]] = adress1[11:10]; //atualiza cache table
 	FSM2 = 3'b000;
-	//stall1 = 0; //termina
-	achou1 = 2;
+	stall1 = 0; //termina
+	achou1 = 0;
 	//w_en1 = 0;
 	end
 	
@@ -606,8 +548,8 @@ memoria_principal mp(
 
 	data_p1 = data_c1; //manda dado pro banco de registradores em P1
 	FSM2 = 3'b000;
-	//stall1 = 0; //termina
-	achou1 = 2;
+	stall1 = 0; //termina
+	achou1 = 0;
 	//r_en1 = 0;
 	end
 	
@@ -655,8 +597,8 @@ memoria_principal mp(
 
 	data_p2 = data_c2; //manda dado pro banco de registradores em P2
 	FSM2 = 3'b000;
-	//stall2 = 0; //termina
-	achou2 = 2;
+	stall2 = 0; //termina
+	achou2 = 0;
 	//r_en2 = 0;
 	
 	end
@@ -689,8 +631,8 @@ memoria_principal mp(
 	cache_table2[adress2[9:2]] = adress2[11:10]; //atualiza cache table
 	cache_valido2[adress2[9:2]]  = 1;
 	FSM2 = 3'b000;
-	//stall2 = 0; //termina
-	achou2 = 2;
+	stall2 = 0; //termina
+	achou2 = 0;
 	//w_en2 = 0;
 	
 	end
@@ -756,8 +698,8 @@ memoria_principal mp(
 
 	data_p1 = data_c1; //manda dado pro banco de registradores em P1
 	FSM1 = 3'b000;
-	//stall1 = 0; //termina
-	achou1 = 2;
+	stall1 = 0; //termina
+	achou1 = 0;
 	//r_en1 = 0;
 
 	end
@@ -792,8 +734,8 @@ memoria_principal mp(
 	cache_table1[adress1[9:2]] = adress1[11:10]; //atualiza cache table
 	cache_valido1[adress1[9:2]] = 1;
 	FSM1 = 3'b000;
-	//stall1 = 0; //termina
-	achou1 = 2;
+	stall1 = 0; //termina
+	achou1 = 0;
 	//w_en1 = 0;
 
 	end
@@ -848,8 +790,8 @@ memoria_principal mp(
 
 	data_p2 = data_c2; //manda dado pro banco de registradores em P2
 	FSM2 = 3'b000;
-	//stall2 = 0; //termina
-	achou2 = 2;
+	stall2 = 0; //termina
+	achou2 = 0;
 	//r_en2 = 0;
 	
 	end
@@ -883,8 +825,8 @@ memoria_principal mp(
 	cache_table2[adress2[9:2]] = adress2[11:10]; //atualiza cache table
 	cache_valido2[adress2[9:2]] = 1;
 	FSM2 = 3'b000;
-	//stall2 = 0; //termina
-	achou2 = 2;
+	stall2 = 0; //termina
+	achou2 = 0;
 	//w_en2 = 0;
 	end
 
