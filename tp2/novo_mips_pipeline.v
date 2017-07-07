@@ -32,7 +32,6 @@ reg [9:0] PC;
 reg [31:0] IR_1;
 reg [31:0] IR_2;
 reg [31:0] IR_3;
-reg [31:0] IR_4;
 
 //guarda a saida da ULA 
 reg [31:0] saida_ula_1; //para ser usada no quarto estagio
@@ -121,16 +120,16 @@ wire [4:0] signal_rd;
 	
 	
 	
-assign signal_wren	=	(IR_3[31:26] == 6'b101011) ? 1 : 0; //data mem
+assign signal_wren	=	(IR_2[31:26] == 6'b101011) ? 1 : 0; //data mem
 
 // se for uma operacao do tipo R, o segundo registrador passado é o de destino
 // se nao (tipo I), é o segundo
-assign signal_rd	=	(IR_4[31:26] == 6'b000000) ? IR_4[15:11] : IR_4[20:16];
+assign signal_rd	=	(IR_3[31:26] == 6'b000000) ? IR_4[15:11] : IR_4[20:16];
 
 // para as instrucoes add, sub, addi e load, sempre que elas estiverem no
 // ultimo estagio, o write enable vai ser 1. caso contrario, ele e zero,
 // o resto do trabalho pra escrever ja e feito no banco de regs.
-assign signal_br_in_w_en = ((IR_4[31:26] == 6'b000000 && (IR_4[5:0] == 6'b100000 || IR_4[5:0] == 6'b100010)) || IR_4[31:26] == 6'b001000 || IR_4[31:26] == 6'b100011)  ? 1'b1 : 1'b0;
+assign signal_br_in_w_en = ((IR_3[31:26] == 6'b000000 && (IR_4[5:0] == 6'b100000 || IR_4[5:0] == 6'b100010)) || IR_4[31:26] == 6'b001000 || IR_4[31:26] == 6'b100011)  ? 1'b1 : 1'b0;
 	
 // nosso loop de execucao (FICA TUDO NO MESMO POSEDGE MESMO)
 	always@(posedge clk[25])begin
@@ -142,7 +141,6 @@ assign signal_br_in_w_en = ((IR_4[31:26] == 6'b000000 && (IR_4[5:0] == 6'b100000
 			IR_1 <= 32'b0;
 			IR_2 <= 32'b0;
 			IR_3 <= 32'b0;
-			IR_4 <= 32'b0;
 			A <= 32'b0;
 			B_1 <= 32'b0;
 			B_2 <= 32'b0;
@@ -176,7 +174,6 @@ assign signal_br_in_w_en = ((IR_4[31:26] == 6'b000000 && (IR_4[5:0] == 6'b100000
 				////////////////////////////
 				A <= dado_lido_1;
 				B_1 <= dado_lido_2;
-				IR_2 <= IR_1;
 				
 				// INSTRUCAO NOP
 		
@@ -186,13 +183,13 @@ assign signal_br_in_w_en = ((IR_4[31:26] == 6'b000000 && (IR_4[5:0] == 6'b100000
 //		if(IR_1[31:26] == 6'b000000 || IR_1[31:26] == 6'b000100)begin
 //
 //		if(
-//		IR_1[25:21] == IR_2[25:21] || IR_1[25:21] == IR_3[25:21] ||
-//      IR_1[20:16] == IR_2[20:16] || IR_1[20:16] == IR_3[20:16] ||
-//		IR_1[25:21] == IR_4[25:21] ||
-//      IR_1[20:16] == IR_4[20:16]
+//		IR_1[25:21] == IR_1[25:21] || IR_1[25:21] == IR_2[25:21] ||
+//      IR_1[20:16] == IR_1[20:16] || IR_1[20:16] == IR_2[20:16] ||
+//		IR_1[25:21] == IR_3[25:21] ||
+//      IR_1[20:16] == IR_3[20:16]
 //		) begin
 //				
-//				IR_2[31:0] <= 32'b0;
+//				IR_1[31:0] <= 32'b0;
 //				PC <= PC;
 //			end
 //			
@@ -203,11 +200,11 @@ assign signal_br_in_w_en = ((IR_4[31:26] == 6'b000000 && (IR_4[5:0] == 6'b100000
 //		if(IR_1[31:26] == 6'b001000 || IR_1[31:26] == 6'b100011 )begin
 //		
 //		if(
-//		IR_1[25:21] == IR_2[25:21] || IR_1[25:21] == IR_3[25:21] ||
-//		IR_1[25:21] == IR_4[25:21]
+//		IR_1[25:21] == IR_1[25:21] || IR_1[25:21] == IR_2[25:21] ||
+//		IR_1[25:21] == IR_3[25:21]
 //		) begin
 //				
-//				IR_2[31:0] <= 32'b0;
+//				IR_1[31:0] <= 32'b0;
 //				PC <= PC;
 //			end
 //			
@@ -229,53 +226,53 @@ assign signal_br_in_w_en = ((IR_4[31:26] == 6'b000000 && (IR_4[5:0] == 6'b100000
 				////////////////////////////
 				//Excute
 				////////////////////////////
-				if(IR_2[31:26] == 6'b000000)begin
-					if(IR_2[5:0] == 6'b100000)begin //add
+				if(IR_1[31:26] == 6'b000000)begin
+					if(IR_1[5:0] == 6'b100000)begin //add
 						saida_ula_1 <= A + B_1;
 					end
-					if(IR_2[5:0] == 6'b100010)begin //sub
+					if(IR_1[5:0] == 6'b100010)begin //sub
 						saida_ula_1 <= A - B_1;
 					end
 				end
 				
-				if(IR_2[31:26] == 6'b001000)begin //addi
+				if(IR_1[31:26] == 6'b001000)begin //addi
 				
-					saida_ula_1 <= A + {{16{IR_2[15]}}, IR_2[15:0]};
+					saida_ula_1 <= A + {{16{IR_1[15]}}, IR_2[15:0]};
 					
 				end
 				
-				if(IR_2[31:26] == 6'b000100)begin //beq
+				if(IR_1[31:26] == 6'b000100)begin //beq
 				
 					//saida_ula_1 <= A + B_1;
 					if(A == B_1)
 					begin
 					
-					PC <= PC + {{16{IR_2[15]}}, IR_2[15:0]};
+					PC <= PC + {{16{IR_1[15]}}, IR_2[15:0]};
 					
 					end
 					
 				end
 				
-				if(IR_2[31:26] == 6'b000010)begin //jump
+				if(IR_1[31:26] == 6'b000010)begin //jump
 				
-				PC[9:0] <= IR_2[9:0];
+				PC[9:0] <= IR_1[9:0];
 					
 				end
 				
-				if(IR_2[31:26] == 6'b100011)begin //lw
+				if(IR_1[31:26] == 6'b100011)begin //lw
 				
-					saida_ula_1 <= A + {{16{IR_2[15]}}, IR_2[15:0]};
+					saida_ula_1 <= A + {{16{IR_1[15]}}, IR_2[15:0]};
 					
 				end
 				
-				if(IR_2[31:26] == 6'b101011)begin //sw
+				if(IR_1[31:26] == 6'b101011)begin //sw
 				
-					saida_ula_1 <= A + {{16{IR_2[15]}}, IR_2[15:0]};
+					saida_ula_1 <= A + {{16{IR_1[15]}}, IR_2[15:0]};
 					
 				end
 				
 				B_2 <= B_1; //para SW
-				IR_3 <= IR_2;
+				IR_2 <= IR_1;
 				////////////////////////////
 				//Excute
 				////////////////////////////
@@ -291,12 +288,12 @@ assign signal_br_in_w_en = ((IR_4[31:26] == 6'b000000 && (IR_4[5:0] == 6'b100000
 				//Memory
 				////////////////////////////
 				saida_ula_2 <= saida_ula_1;
-				//if(IR_3[31:26] == 6'b100011)begin //lw
+				//if(IR_2[31:26] == 6'b100011)begin //lw
 				
 					//saida_ula_2 <= out_mem_data;
 					
 				//end
-				IR_4 <= IR_3;
+				IR_3 <= IR_2;
 				////////////////////////////
 				//Memory
 				////////////////////////////
