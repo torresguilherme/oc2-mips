@@ -60,6 +60,7 @@ wire signal_wren;
 // valor do registrador de destino
 wire [4:0] signal_rd;
 
+reg branch;
 
 
 	mem_inst mem_i(
@@ -147,7 +148,7 @@ assign signal_br_in_w_en = ((IR_4[31:26] == 6'b000000 && (IR_4[5:0] == 6'b100000
 			B_2 <= 32'b0;
 			saida_ula_1 <= 32'b0;
 			saida_ula_2 <= 32'b0;
-				
+			branch <= 1'b0;
 			halt <= 1'b1;
 		end
 		
@@ -164,7 +165,11 @@ assign signal_br_in_w_en = ((IR_4[31:26] == 6'b000000 && (IR_4[5:0] == 6'b100000
 			begin
 				
 				PC <= PC + 1;
-				IR_1 <= out_mem_inst;
+				if(branch != 1)
+				begin
+					IR_1 <= out_mem_inst;
+				end
+				branch <= 1'b0;
 				IR_2 <= IR_1;
 				
 				////////////////////////////
@@ -199,7 +204,12 @@ assign signal_br_in_w_en = ((IR_4[31:26] == 6'b000000 && (IR_4[5:0] == 6'b100000
 					begin
 					
 						PC <= PC + {{16{IR_2[15]}}, IR_2[15:0]};
-					
+						IR_1 <= 32'b0;
+						IR_2 <= 32'b0;
+						IR_3 <= 32'b0;
+						IR_4 <= 32'b0;
+						branch <= 1'b1;
+						//out_mem_inst <= 32'b0;
 					end
 					
 				end
@@ -207,6 +217,11 @@ assign signal_br_in_w_en = ((IR_4[31:26] == 6'b000000 && (IR_4[5:0] == 6'b100000
 				if(IR_2[31:26] == 6'b000010)begin //jump
 				
 					PC[9:0] <= IR_2[9:0];
+					IR_1 <= 32'b0;
+					IR_2 <= 32'b0;
+					IR_3 <= 32'b0;
+					IR_4 <= 32'b0;
+					branch <= 1'b1;
 					
 				end
 				
@@ -248,8 +263,6 @@ assign signal_br_in_w_en = ((IR_4[31:26] == 6'b000000 && (IR_4[5:0] == 6'b100000
 				////////////////////////////
 				//Memory
 				////////////////////////////
-				
-				
 				
 				
 				
